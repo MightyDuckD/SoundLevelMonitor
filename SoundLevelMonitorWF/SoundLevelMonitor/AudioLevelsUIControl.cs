@@ -13,6 +13,7 @@ namespace SoundLevelMonitor
     class AudioLevelsUIControl : Control
     {
         AudioLevelMonitor _audioMonitor;
+        AlertService alertService;
         List<Pen> pens = new List<Pen>();
         Dictionary<string, Pen> _sessionIdToPen = new Dictionary<string, Pen>();
         Timer dispatcherTimer;
@@ -20,6 +21,8 @@ namespace SoundLevelMonitor
 
 
         public AudioLevelsUIControl() {
+            alertService = new AlertService();
+
             DoubleBuffered = true;
             dispatcherTimer = new Timer();
             dispatcherTimer.Tick += DispatcherTimer_Tick;
@@ -51,6 +54,7 @@ namespace SoundLevelMonitor
             set {
                 _audioMonitor = value; 
                 if (_audioMonitor != null) {
+                    _audioMonitor.setAlertService(alertService);
                 }
             }
         }
@@ -124,6 +128,8 @@ namespace SoundLevelMonitor
             base.OnPaint(pe);
             var g = pe.Graphics;
 
+            
+
             // if we have no AudioMonitor draw a blank grid
             if (AudioMonitor == null) {
                 RenderVUMeterGrid(g, 1.0);
@@ -163,18 +169,24 @@ namespace SoundLevelMonitor
             List<string> sessionIdList = activeSamples.Keys.ToList();
             sessionIdList.Sort();
             var font = SystemFonts.DefaultFont;
+            var statusString = "[name] [in timeout] [is stopped]";
             // first time is to measure the height to draw the legend box
             {
                 float y_start = 5;
                 float max_label_width = 0;
 
                 foreach (var sessionId in sessionIdList) {
-                    string name = activeSamples[sessionId].SessionName;            
+                    string name = activeSamples[sessionId].SessionName;
+                    name = name + " " + alertService.inTimeout(name) + " " + alertService.inStopped(name);            
+
                     var measure = g.MeasureString(name, font);
                     y_start += measure.Height;             
                     max_label_width = Math.Max(max_label_width,measure.Width);
                     y_start += 10; // vertical padding
                 }
+                // status zeile
+                y_start += 10 + g.MeasureString(statusString, font).Height;
+                max_label_width = Math.Max(max_label_width, g.MeasureString(statusString,font).Width);
                 // draw the legend box
                 g.FillRectangle(Brushes.Black,5,10,max_label_width + 10,y_start);
                 g.DrawRectangle(greenPen,5,10,max_label_width + 10,y_start);
@@ -187,6 +199,8 @@ namespace SoundLevelMonitor
 
                 foreach (var sessionId in sessionIdList) {
                     string name = activeSamples[sessionId].SessionName;
+                    name = name + " " + alertService.inTimeout(name) + " " + alertService.inStopped(name);
+
                     Pen pen = this.penForSessionId(sessionId);
                     var brush = pen.Brush;
 
@@ -196,6 +210,8 @@ namespace SoundLevelMonitor
 
                     y_start += 10; // vertical padding
                 }
+                y_start += g.MeasureString(statusString, font).Height;
+                g.DrawString(statusString, font, Brushes.Orange, new PointF(10, y_start));
             }
 
             dispatcherTimer.Start();

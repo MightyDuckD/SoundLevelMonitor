@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using CSCore.CoreAudioAPI;
+using System.Windows.Forms;
 
 namespace SoundLevelMonitor
 {
@@ -15,6 +16,7 @@ namespace SoundLevelMonitor
         IDictionary<string, SampleInfo> sessionIdToInfo = new Dictionary<string, SampleInfo>();
         IDictionary<string, List<double>> sessionIdToAudioSamples = new Dictionary<string, List<double>>();
         int maxSamplesToKeep = 1000;
+        AlertService alertService = new AlertService();
 
         public AudioLevelMonitor() {
             dispatchingTimer = new System.Timers.Timer(interval_ms);
@@ -22,6 +24,12 @@ namespace SoundLevelMonitor
             dispatchingTimer.AutoReset = false;
             dispatchingTimer.Start();
         }
+
+        public void setAlertService(AlertService alert)
+        {
+            alertService = alert;
+        }
+
         public void Stop() {
             dispatchingTimer.Stop();
         }
@@ -112,12 +120,14 @@ namespace SoundLevelMonitor
                                                 var val = audioMeterInformation.GetPeakValue();
                                                 samples.Add(val);
                                                 truncateSamples(samples);
-                                                /* Console.WriteLine("{0} {1} {2} {3}",
+                                                 Console.WriteLine("{0} {1} {2} {3}",
                                                     audioSessionControl2.ProcessID,
                                                     process.ProcessName,
                                                     process.MainWindowTitle,
                                                     val);
-                                                    */
+
+                                                alertService.ProcessAlert(process.ProcessName,val);
+                                                
                                             }
                                         }
                                     }
@@ -148,6 +158,8 @@ namespace SoundLevelMonitor
             System.GC.Collect();
             NewAudioSamplesEventListeners?.Invoke(this);
         }
+
+
 
         private static AudioSessionManager2 GetDefaultAudioSessionManager2(DataFlow dataFlow) {
 

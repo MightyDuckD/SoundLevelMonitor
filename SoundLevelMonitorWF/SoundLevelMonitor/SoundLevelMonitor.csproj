@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AlertService.cs" />
     <Compile Include="AudioLevelMonitor.cs" />
     <Compile Include="AudioLevelsUIControl.cs">
       <SubType>Component</SubType>
