@@ -126,7 +126,7 @@ namespace SoundLevelMonitor
                                                     process.MainWindowTitle,
                                                     val);
 
-                                                alertService.ProcessAlert(process.ProcessName,val);
+                                                alertService.ProcessAlert(sessionid,val);
                                                 
                                             }
                                         }

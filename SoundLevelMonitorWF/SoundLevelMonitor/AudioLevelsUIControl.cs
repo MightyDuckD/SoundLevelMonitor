@@ -139,23 +139,23 @@ namespace SoundLevelMonitor
             var activeSamples = AudioMonitor.GetActiveSamples();
             double maxSample = computeMaxSampleLastN(activeSamples, this.Size.Width);           
             maxSample = Math.Max(maxSample, 0.05); // make sure we don't divide by zero
-            RenderVUMeterGrid(g, maxSample);            
+            RenderVUMeterGrid(g, maxSample);
 
-            // now draw the individual sample lines                        
+            // now draw the individual sample lines
             foreach (var kvp in activeSamples) {
                 Pen audioLevelPen = penForSessionId(kvp.Value.sessionId);
                 string name = kvp.Value.SessionName;
                 double[] samples = kvp.Value.samples;
-
+                double scale = 9;
                 double last_sample = samples[samples.Length - 1];
                 for (int x = 0; x < samples.Length - 1; x++) {
-                    if (x > Size.Width) {
+                    if (x * scale > Size.Width) {
                         goto next_process;
                     }
                     var sample = samples[samples.Length - (x + 1)];
                     g.DrawLine(audioLevelPen,
-                        new Point(Size.Width - x, (int)(Size.Height - (Size.Height * (last_sample / maxSample)))),
-                        new Point(Size.Width - (x + 1), (int)(Size.Height - (Size.Height * (sample / maxSample)))));
+                        new Point((int)(Size.Width - x * scale), (int)(Size.Height - (Size.Height * Math.Min(1,last_sample / maxSample)))),
+                        new Point((int)(Size.Width - (x + 1) * scale), (int)(Size.Height - (Size.Height * Math.Min(1, sample / maxSample)))));
                     last_sample = sample;
                 }
                 next_process:;
@@ -176,8 +176,7 @@ namespace SoundLevelMonitor
                 float max_label_width = 0;
 
                 foreach (var sessionId in sessionIdList) {
-                    string name = activeSamples[sessionId].SessionName;
-                    name = name + " " + alertService.inTimeout(name) + " " + alertService.inStopped(name);            
+                    string name = activeSamples[sessionId].pid + ": " + activeSamples[sessionId].SessionName + " " + alertService.inTimeout(sessionId) + " " + alertService.inStopped(sessionId);            
 
                     var measure = g.MeasureString(name, font);
                     y_start += measure.Height;             
@@ -198,8 +197,7 @@ namespace SoundLevelMonitor
                 float y_start = 5;
 
                 foreach (var sessionId in sessionIdList) {
-                    string name = activeSamples[sessionId].SessionName;
-                    name = name + " " + alertService.inTimeout(name) + " " + alertService.inStopped(name);
+                    string name = activeSamples[sessionId].pid + ": " + activeSamples[sessionId].SessionName + " " + alertService.inTimeout(sessionId) + " " + alertService.inStopped(sessionId);
 
                     Pen pen = this.penForSessionId(sessionId);
                     var brush = pen.Brush;

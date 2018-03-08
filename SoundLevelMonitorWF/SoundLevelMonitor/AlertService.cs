@@ -10,22 +10,22 @@ namespace SoundLevelMonitor
     public class AlertService
     {
         
-        Dictionary<String,bool> showed = new Dictionary<string, bool>();
+        Dictionary<String,bool> stopped = new Dictionary<string, bool>();
         Dictionary<String, long> lastShowed = new Dictionary<String,long>();
 
         public void ProcessAlert(String process, double val)
         {
-            if (!inStopped(process) && val > 0.28 && !inTimeout(process))
+            if (!inStopped(process) && val > 0.10 && !inTimeout(process))
             {
                 DialogResult res = MessageBox.Show("Someone is talking in " + process + ", press cancel to listen again for someone talking (after timeout), press ok to stop listening", "Skype Alert", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
 
                 if (res == DialogResult.OK)
                 {
-                    showed[process] = true;
+                    stopped[process] = true;
                 }
                 if (res == DialogResult.Cancel)
                 {
-                    showed[process] = false;
+                    stopped[process] = false;
                 }
                 lastShowed[process] = GetTimestamp();
             }
@@ -46,8 +46,8 @@ namespace SoundLevelMonitor
 
         public Boolean inStopped(String process)
         {
-            if(showed.ContainsKey(process))
-                return showed[process];
+            if(stopped.ContainsKey(process))
+                return stopped[process];
             return false;
         }
     }
